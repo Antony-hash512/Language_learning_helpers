@@ -81,6 +81,12 @@ house
 ubiquitous
 ephemeral
 ```
+### example-words.txt
+Файл `example-words.txt` находится в репозитории для примера. Вы можете переименовать его в `words.txt` или передать в скрипт в качестве аргумента:
+```bash
+./words_testing.sh example-words.txt
+```
+
 
 ## Использование
 
