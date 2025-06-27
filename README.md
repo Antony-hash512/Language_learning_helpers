@@ -18,7 +18,7 @@
 -   Логирование сессии в файл.
 
 ## Требования
-
+-   `Linux`, `MacOS`, прочая линуксоподобная ОС или линуксовая командная строка на винде (WSL'ом вроде зовётся).
 -   `bash`
 -   `nodejs` версии 18 или выше и `npm`
 -   `@google/gemini-cli`
@@ -27,11 +27,9 @@
 
 1.  **Клонируйте репозиторий:**
     ```bash
-    git clone <URL_репозитория>
-    cd words_learning_test
+    git clone https://github.com/Antony-hash512/Language_learning_helpers
+    cd Language_learning_helpers
     ```
-    Замените `<URL_репозитория>` на реальный URL данного репозитория.
-
 2.  **Установите `nodejs` и `npm`:**
 
     Для Arch Linux вы можете установить их с помощью следующей команды. Это потребует прав суперпользователя (root).
