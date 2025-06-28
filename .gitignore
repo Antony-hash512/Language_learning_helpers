@@ -3,3 +3,4 @@ logs/*
 !example-words.txt
 *.yaml
 *.sqlite
+*.sqlite-journal

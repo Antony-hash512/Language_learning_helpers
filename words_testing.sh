@@ -163,7 +163,14 @@ while [[ -s "$INPUT_FILE" ]]; do
     # Вызываем gemini-cli, передавая ему промпт.
     # Кавычки вокруг "$PROMPT" обязательны, чтобы промпт передался как один аргумент.
     all_sentences_from_db=$(get_sentence_from_db "$word")
-    sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE" < /dev/null)
+    # Проверяем, что all_sentences_from_db не пустая и существует
+    if [[ -n "$all_sentences_from_db" ]]; then
+        EXTRA_PROMPT_SENTENCE="Список предложений, которые также нельзя повторять: ${all_sentences_from_db}"
+    else
+        EXTRA_PROMPT_SENTENCE=""
+    fi
+
+    sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE $EXTRA_PROMPT_SENTENCE" < /dev/null)
     add_sentence_to_db "$word" "$sentence"
 
     check_translation_function
@@ -180,12 +187,6 @@ while [[ -s "$INPUT_FILE" ]]; do
             к|k) # another context
                 echo "Запрашиваю другой контекст..."
                 all_sentences="${all_sentences} \n ${sentence}"
-                # Проверяем, что all_sentences_from_db не пустая и существует
-                if [[ -n "$all_sentences_from_db" ]]; then
-                    EXTRA_PROMPT_SENTENCE="Список предложений, которые также нельзя повторять: ${all_sentences_from_db}"
-                else
-                    EXTRA_PROMPT_SENTENCE=""
-                fi
                 PROMPT_GET_DIFFERENT_SENTENCE="Придумай предложение со словом '${word}' ${LANGUAGE_INPUT}, которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в контексте, которого не было в тех предложениях. ${EXTRA_PROMPT_SENTENCE}"
                 sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_GET_DIFFERENT_SENTENCE" < /dev/null)
                 add_sentence_to_db "$word" "$sentence"
