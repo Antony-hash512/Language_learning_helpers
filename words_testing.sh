@@ -2,6 +2,7 @@
 
 # --- Colors setup ---
 source colors.sh
+HOTKEY_COLOR=$CYAN
 
 # --- Logging setup ---
 # Save original stdout and stderr
@@ -83,7 +84,7 @@ check_translation_function() {
     else
         echo -e "${RED}Перевод неправильный${NC}"
         IS_MISTAKE=true
-        echo "$(gemini -m "$MODEL_GEMINI" -p "Объясни, почему слово '${word}' в предложении '${sentence}' нельзя перевести как '${translation}'" < /dev/null)"
+        echo -e "${BG_RED}${CYAN}$(gemini -m "$MODEL_GEMINI" -p "Объясни, почему слово '${word}' в предложении '${sentence}' нельзя перевести как '${translation}'" < /dev/null)${NC}"
     fi
 }
 
@@ -125,7 +126,7 @@ while [[ -s "$INPUT_FILE" ]]; do
 
     # Command loop for the current word
     while true; do
-        echo -e "${BOLD}Команды: [с]ледующее слово, другой [к]онтекст, [п]еревод предложения, [л]ог (вкл/выкл), [в]ыход ${NC}"
+        echo -e "Команды: [${HOTKEY_COLOR}с${NC}]ледующее слово, другой [${HOTKEY_COLOR}к${NC}]онтекст, [${HOTKEY_COLOR}п${NC}]ереводы предложения, напомнить п[${HOTKEY_COLOR}р${NC}]едложение, [${HOTKEY_COLOR}л${NC}]ог (вкл/выкл), [${HOTKEY_COLOR}в${NC}]ыход"
         read -p "Введите команду: " cmd </dev/tty
         case "$cmd" in
             с|n) # next word
@@ -140,10 +141,13 @@ while [[ -s "$INPUT_FILE" ]]; do
                 ;;
             п|t) # show translations
                 echo "Запрашиваю варианты перевода..."
-                echo "$(gemini -m "$MODEL_GEMINI" -p "Напиши несколько возможных вариантов перевода предложения '${sentence}' на ${LANGUAGE}.'" < /dev/null)"
+                echo -e "${CYAN}$(gemini -m "$MODEL_GEMINI" -p "Напиши несколько возможных вариантов перевода предложения '${sentence}' на ${LANGUAGE}.'" < /dev/null)${NC}"
                 ;;
             л|l) # toggle logging
                 toggle_log
+                ;;
+            р|r) # repeat sentence
+                echo -e "${CYAN}$sentence${NC}"
                 ;;
             в|q) # exit
                 echo "Выход из скрипта."
