@@ -82,6 +82,17 @@ check_translation_function() {
     fi
 }
 
+move_current_word() {
+     if [[ "$IS_MISTAKE" == true ]]; then
+        echo "$word" >> "$MISTAKES_OUTPUT_FILE"
+    else
+        echo "$word" >> "$NO_MISTAKES_OUTPUT_FILE"
+    fi
+    
+    sed -i '1d' "$INPUT_FILE"
+    echo "Слово '$word' обработано и удалено из файла."
+}
+
 # Читаем файл построчно
 # IFS= и -r нужны для корректного чтения строк, содержащих пробелы или спецсимволы
 while [[ -s "$INPUT_FILE" ]]; do
@@ -109,7 +120,7 @@ while [[ -s "$INPUT_FILE" ]]; do
 
     # Command loop for the current word
     while true; do
-        echo "Команды: [с]ледующее слово, другой [к]онтекст, [п]еревод предложения, включить/выключить [л]ог, [в]ыход "
+        echo "Команды: [с]ледующее слово, другой [к]онтекст, [п]еревод предложения, [л]ог (вкл/выкл), [в]ыход "
         read -p "Введите команду: " cmd </dev/tty
         case "$cmd" in
             с|n) # next word
@@ -131,6 +142,11 @@ while [[ -s "$INPUT_FILE" ]]; do
                 ;;
             в|q) # exit
                 echo "Выход из скрипта."
+                echo "В следующей сессии надо будет перейти сразу к следующему слову? (да/нет)"
+                read -p "Введите ответ: " cmd </dev/tty
+                if [[ "$cmd" == "да" || "$cmd" == "Да" || "$cmd" == "ДА" ]]; then
+                    move_current_word
+                fi
                 # Restore descriptors before exiting
                 if $LOG_ACTIVE; then
                   disable_log
@@ -143,18 +159,7 @@ while [[ -s "$INPUT_FILE" ]]; do
         esac
     done
 
-    echo ""
-
-    if [[ "$IS_MISTAKE" == true ]]; then
-        echo "$word" >> "$MISTAKES_OUTPUT_FILE"
-    else
-        echo "$word" >> "$NO_MISTAKES_OUTPUT_FILE"
-    fi
-    
-    sed -i '1d' "$INPUT_FILE"
-    echo "Слово '$word' обработано и удалено из файла."
-    # Добавляем пустую строку для лучшей читаемости вывода
-    echo ""
+    move_current_word
 
 done
 
