@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# --- Colors setup ---
+source colors.sh
+
 # --- Logging setup ---
 # Save original stdout and stderr
 exec 3>&1 4>&2
