@@ -75,33 +75,38 @@ sqlite3 "$DB_FILE" "CREATE TABLE IF NOT EXISTS sentences (word_key TEXT PRIMARY 
 
 # --- Functions ---
 add_sentence_to_db() {
+    local word="$1"
+    local sentence="$2"
     # Получаем текущий JSON-массив из SQLite
     current_sentences=$(get_sentence_from_db "$word")
 
     if [[ -z "$current_sentences" ]]; then
         # Если ключа нет или значения пусты, создаем новый массив
-        # Безопасно передаем 'sentence' в jq как аргумент
-       updated_sentences=$(jq -n --arg sentence "$sentence" '[$sentence]')
+        updated_sentences=$(jq -n --arg sentence "$sentence" '[$sentence]')
     else
         # Используем jq для добавления нового значения в JSON-массив
-        # Проверяем, что current_sentences является валидным JSON-массивом
         if ! echo "$current_sentences" | jq -e . >/dev/null 2>&1; then
             current_sentences="[]"
         fi
-        # Безопасно передаем 'sentence' в jq как аргумент
         updated_sentences=$(echo "$current_sentences" | jq --arg sentence "$sentence" '. + [$sentence]')
     fi
 
-    # Обновляем базу данных, передавая значения как переменные окружения для дочернего процесса bash
-    # Это самый надежный способ избежать проблем с кавычками в SQL и shell
-    WORD_VAR=$word SENTENCES_VAR=$updated_sentences sqlite3 "$DB_FILE" \
-      'INSERT OR REPLACE INTO sentences (word_key, sentences_array) VALUES (?, ?)' \
-      "$(printf ".parameter set @1 '%q'\n.parameter set @2 '%q'" "$WORD_VAR" "$SENTENCES_VAR")"
+    # Заменяем одинарные кавычки на двойные для безопасной вставки в SQL.
+    # Это стандартный способ экранирования для SQL.
+    local word_escaped=${word//\'/\'\'}
+    local sentences_escaped=${updated_sentences//\'/\'\'}
+
+    # Формируем и выполняем SQL-запрос.
+    local sql="INSERT OR REPLACE INTO sentences (word_key, sentences_array) VALUES ('$word_escaped', '$sentences_escaped');"
+    sqlite3 "$DB_FILE" "$sql"
 }
 
 get_sentence_from_db() {
-    # Безопасно получаем данные, используя параметры
-    sqlite3 "$DB_FILE" "SELECT sentences_array FROM sentences WHERE word_key = ?;" -cmd ".parameter set @1 '$1'"
+    local word="$1"
+    # Экранируем одинарные кавычки для безопасного поиска.
+    local word_escaped=${word//\'/\'\'}
+    local sql="SELECT sentences_array FROM sentences WHERE word_key = '$word_escaped';"
+    sqlite3 "$DB_FILE" "$sql"
 }
 
 
