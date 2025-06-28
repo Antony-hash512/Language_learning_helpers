@@ -181,7 +181,7 @@ while [[ -s "$INPUT_FILE" ]]; do
                 else
                     EXTRA_PROMPT_SENTENCE=""
                 fi
-                PROMPT_GET_DIFFERENT_SENTENCE="Придумай предложение со словом '${word}', которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в контексте, которого не было в тех предложениях. ${EXTRA_PROMPT_SENTENCE}"
+                PROMPT_GET_DIFFERENT_SENTENCE="Придумай предложение со словом '${word}' ${LANGUAGE_INPUT}, которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в контексте, которого не было в тех предложениях. ${EXTRA_PROMPT_SENTENCE}"
                 sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_GET_DIFFERENT_SENTENCE" < /dev/null)
                 add_sentence_to_db "$word" "$sentence"
                 check_translation_function
