@@ -1,6 +1,6 @@
 # words_learning_test
 
-Проект для практики и тестирования словарного запаса с использованием Google Gemini CLI.
+Проект для практики и тестирования словарного запаса с использованием [Google Gemini CLI](https://github.com/google-gemini/gemini-cli).
 
 ## TODO:
  - [ ] Добавить дополнительные интрукции и описания в данном README.
@@ -86,15 +86,16 @@
 
 **Пример `words.txt`:**
 ```
-apple
-house
 ubiquitous
 ephemeral
+serendipity
+cacophony
+juxtaposition
 ```
 ### example-words.txt
-Файл `example-words.txt` находится в репозитории для примера. Вы можете переименовать его в `words.txt` или передать в скрипт в качестве аргумента:
+Файл `example-words.txt` находится в репозитории для примера. Поумолчанию же скрипт подхватывает файл `words.txt` или тот, который передан в качестве аргумента:
 ```bash
-./words_testing.sh example-words.txt
+./words_testing.sh another-file.txt
 ```
 
 
