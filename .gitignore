@@ -2,3 +2,4 @@ logs/*
 *.txt
 !example-words.txt
 *.yaml
+*.sqlite
