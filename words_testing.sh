@@ -9,6 +9,9 @@ fi
 
 # Файл, из которого читаем слова
 INPUT_FILE=${1:-"words.txt"}
+NO_MISTAKES_OUTPUT_FILE="no_mistakes.txt"
+MISTAKES_OUTPUT_FILE="mistakes.txt"
+IS_MISTAKE=false
 MODEL_GEMINI=${2:-"gemini-2.5-flash"}
 LANGUAGE="русский язык"
 LANGUAGE_INPUT="на английском языке"
@@ -40,9 +43,9 @@ function check_translation_function() {
 
     if [[ "$check_translation" == "да" || "$check_translation" == "Да" || "$check_translation" == "ДА" ]]; then
         echo "Перевод правильный"
-        #echo "$(gemini -m "$MODEL_GEMINI" -p "Как ещё слово '${word}' в предложении '${sentence}' можно перевести на ${LANGUAGE} помимо '${translation}' (если есть другие варианты)?" < /dev/null)"
     else
         echo "Перевод неправильный"
+        IS_MISTAKE=true
         echo "$(gemini -m "$MODEL_GEMINI" -p "Объясни, почему слово '${word}' в предложении '${sentence}' нельзя перевести как '${translation}'" < /dev/null)"
     fi
 
@@ -70,9 +73,12 @@ function another_context() {
 
 # Читаем файл построчно
 # IFS= и -r нужны для корректного чтения строк, содержащих пробелы или спецсимволы
-while IFS= read -r word || [[ -n "$word" ]]; do
+while [[ -s "$INPUT_FILE" ]]; do
+    word=$(head -n 1 "$INPUT_FILE")
+    IS_MISTAKE=false
     # Пропускаем пустые строки
     if [[ -z "$word" ]]; then
+        sed -i '1d' "$INPUT_FILE"
         continue
     fi
 
@@ -97,9 +103,19 @@ while IFS= read -r word || [[ -n "$word" ]]; do
     fi
 
     echo ""
+
+    if [[ "$IS_MISTAKE" == true ]]; then
+        echo "$word" >> "$MISTAKES_OUTPUT_FILE"
+    else
+        echo "$word" >> "$NO_MISTAKES_OUTPUT_FILE"
+    fi
     
+    sed -i '1d' "$INPUT_FILE"
+    echo "Слово '$word' обработано и удалено из файла."
     # Добавляем пустую строку для лучшей читаемости вывода
     echo ""
 
-done < "$INPUT_FILE"
+done
+
+echo "Все слова в файле '$INPUT_FILE' были обработаны."
 
