@@ -67,6 +67,45 @@ if [[ ! -f "$INPUT_FILE" ]]; then
     exit 1
 fi
 
+# --- Database setup ---
+DB_FILE="sentences_cache.sqlite"
+
+# Создаем таблицу. Используем TEXT для хранения JSON-строки.
+sqlite3 "$DB_FILE" "CREATE TABLE IF NOT EXISTS sentences (word_key TEXT PRIMARY KEY, sentences_array TEXT);"
+
+# --- Functions ---
+add_sentence_to_db() {
+    # Получаем текущий JSON-массив из SQLite
+    current_sentences=$(sqlite3 "$DB_FILE" "SELECT sentences_array FROM sentences WHERE word_key = '$word';")
+   
+    if [[ -z "$current_sentences" ]]; then
+        # Если ключа нет или значения пусты, создаем новый массив
+       updated_sentences="[\"$sentence\"]"
+    else
+        # Используем jq для добавления нового значения в JSON-массив
+        # Надо убедиться, что current_sentences является валидным JSON-массивом,
+        # иначе jq может выдать ошибку.
+        # проверяем, что current_sentences является валидным JSON-массивом
+        if ! echo "$current_sentences" | jq -e . >/dev/null 2>&1; then
+            current_sentences="[]"
+        fi
+        updated_sentences=$(echo "$current_sentences" | jq ". + [\"$sentence\"]")
+    fi
+
+    # Обновляем базу данных
+    sqlite3 "$DB_FILE" "INSERT OR REPLACE INTO sentences (word_key, sentences_array) VALUES ('$word', '$updated_sentences');"
+}
+
+get_sentence_from_db() {
+    #  проверяем, что word_key существует в базе данных
+    if ! sqlite3 "$DB_FILE" "SELECT EXISTS(SELECT 1 FROM sentences WHERE word_key = '$word');" >/dev/null 2>&1; then
+        return ""
+    else
+        return $(sqlite3 "$DB_FILE" "SELECT sentences_array FROM sentences WHERE word_key = '$word';")
+    fi
+}
+
+
 check_translation_function() {
     echo -e "${CYAN}$sentence${NC}"
     echo ""
@@ -119,8 +158,9 @@ while [[ -s "$INPUT_FILE" ]]; do
 
     # Вызываем gemini-cli, передавая ему промпт.
     # Кавычки вокруг "$PROMPT" обязательны, чтобы промпт передался как один аргумент.
+    all_sentences_from_db=$(get_sentence_from_db "$word")
     sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE" < /dev/null)
-    all_sentences="$sentence"
+    add_sentence_to_db "$word" "$sentence"
 
     check_translation_function
 
@@ -135,8 +175,16 @@ while [[ -s "$INPUT_FILE" ]]; do
                 ;;
             к|k) # another context
                 echo "Запрашиваю другой контекст..."
-                all_sentences="${all_sentences}\n${sentence}"
-                sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE Придумай предложение со словом '${word}', которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в контексте, которого не было в тех предложениях." < /dev/null)
+                all_sentences="${all_sentences} \n ${sentence}"
+                # Проверяем, что all_sentences_from_db не пустая и существует
+                if [[ -n "$all_sentences_from_db" ]]; then
+                    EXTRA_PROMPT_SENTENCE="Список предложений, которые также нельзя повторять: ${all_sentences_from_db}"
+                else
+                    EXTRA_PROMPT_SENTENCE=""
+                fi
+                PROMPT_GET_DIFFERENT_SENTENCE="Придумай предложение со словом '${word}', которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в контексте, которого не было в тех предложениях. ${EXTRA_PROMPT_SENTENCE}"
+                sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_GET_DIFFERENT_SENTENCE" < /dev/null)
+                add_sentence_to_db "$word" "$sentence"
                 check_translation_function
                 ;;
             п|t) # show translations
