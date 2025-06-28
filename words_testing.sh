@@ -92,8 +92,12 @@ add_sentence_to_db() {
         updated_sentences=$(echo "$current_sentences" | jq ". + [\"$sentence\"]")
     fi
 
-    # Обновляем базу данных
-    sqlite3 "$DB_FILE" "INSERT OR REPLACE INTO sentences (word_key, sentences_array) VALUES ('$word', '$updated_sentences');"
+    # Обновляем базу данных, используя heredoc и параметры для безопасности
+    sqlite3 "$DB_FILE" <<EOF
+.parameter set @word "$word"
+.parameter set @sentences "$updated_sentences"
+INSERT OR REPLACE INTO sentences (word_key, sentences_array) VALUES (@word, @sentences);
+EOF
 }
 
 get_sentence_from_db() {
