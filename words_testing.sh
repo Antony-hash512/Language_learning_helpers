@@ -147,7 +147,9 @@ while [[ -s "$INPUT_FILE" ]]; do
                 toggle_log
                 ;;
             р|r) # repeat sentence
+                echo ""
                 echo -e "${CYAN}$sentence${NC}"
+                echo ""
                 ;;
             в|q) # exit
                 echo "Выход из скрипта."
