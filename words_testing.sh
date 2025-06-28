@@ -1,13 +1,52 @@
 #!/bin/bash
 
-# Обработка ключа --log
-LOG=false
+# --- Logging setup ---
+# Save original stdout and stderr
+exec 3>&1 4>&2
+
+LOG_ACTIVE=false
+LOGFILE=""
+
+# Function to enable logging
+enable_log() {
+    if [[ ! -d "logs" ]]; then
+        mkdir -p logs
+    fi
+    if [[ -z "$LOGFILE" ]]; then
+        LOGFILE="logs/log-$(date '+%Y-%m-%d_%H-%M-%S').txt"
+        echo "Лог будет записан в $LOGFILE" >&3
+    fi
+    echo "Логирование включено." >&3
+    # Redirect stdout and stderr to tee, which writes to file and original stdout
+    exec 1> >(tee -a "$LOGFILE") 2>&1
+    LOG_ACTIVE=true
+}
+
+# Function to disable logging
+disable_log() {
+    echo "Логирование отключено." >&3
+    # Restore stdout and stderr
+    exec 1>&3 2>&4
+    LOG_ACTIVE=false
+}
+
+# Toggle logging
+toggle_log() {
+    if $LOG_ACTIVE; then
+        disable_log
+    else
+        enable_log
+    fi
+}
+
+
+# Process --log flag
 if [[ "$1" == "--log" ]]; then
-    LOG=true
+    enable_log
     shift
 fi
 
-# Файл, из которого читаем слова
+# --- Script configuration ---
 INPUT_FILE=${1:-"words.txt"}
 NO_MISTAKES_OUTPUT_FILE="no_mistakes.txt"
 MISTAKES_OUTPUT_FILE="mistakes.txt"
@@ -16,20 +55,13 @@ MODEL_GEMINI=${2:-"gemini-2.5-flash"}
 LANGUAGE="русский язык"
 LANGUAGE_INPUT="на английском языке"
 
-if [[ "$LOG" == true ]]; then
-    mkdir -p logs
-    LOGFILE="logs/log-$(date '+%Y-%m-%d_%H-%M-%S').txt"
-    echo "Лог будет записан в $LOGFILE"
-    exec > >(tee -a "$LOGFILE") 2>&1
-fi
-
 # Проверяем, существует ли файл
 if [[ ! -f "$INPUT_FILE" ]]; then
     echo "Ошибка: Файл '$INPUT_FILE' не найден!"
     exit 1
 fi
 
-function check_translation_function() {
+check_translation_function() {
     echo "$sentence"
     echo ""
     read -p "Введите перевод данного слова в данном контексте: " translation </dev/tty
@@ -47,27 +79,6 @@ function check_translation_function() {
         echo "Перевод неправильный"
         IS_MISTAKE=true
         echo "$(gemini -m "$MODEL_GEMINI" -p "Объясни, почему слово '${word}' в предложении '${sentence}' нельзя перевести как '${translation}'" < /dev/null)"
-    fi
-
-    read -p "Хотите получить варианты перевода предложения? (да/нет): " get_translations </dev/tty
-    if [[ "$get_translations" =~ ^(д|Д|да|Да|ДА|y|Y|yes|Yes|YES)$ ]]; then
-        echo "$(gemini -m "$MODEL_GEMINI" -p "Напиши несколько возможных вариантов перевода предложения '${sentence}' на ${LANGUAGE}.'" < /dev/null)"
-    fi
-}
-
-
-function another_context() {
-    local new_sentence=$1
-    local all_sentences=${2:-""}
-
-    all_sentences="${all_sentences}\n${new_sentence}"
-    
-    sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE Придумай новое предложение со словом '${word}', которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в новом контексте." < /dev/null)
-    check_translation_function
-     # Спрашиваем у пользователя, хочет ли он получить другой контекст данного слова
-    read -p "Хотите получить другой контекст данного слова? (да/нет): " get_context </dev/tty
-    if [[ "$get_context" =~ ^(д|Д|да|Да|ДА|y|Y|yes|Yes|YES)$ ]]; then
-        another_context "$sentence" "$all_sentences"
     fi
 }
 
@@ -92,15 +103,45 @@ while [[ -s "$INPUT_FILE" ]]; do
     # Вызываем gemini-cli, передавая ему промпт.
     # Кавычки вокруг "$PROMPT" обязательны, чтобы промпт передался как один аргумент.
     sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE" < /dev/null)
-    
+    all_sentences="$sentence"
 
     check_translation_function
 
-     # Спрашиваем у пользователя, хочет ли он получить другой контекст данного слова
-    read -p "Хотите получить другой контекст данного слова? (да/нет): " get_context </dev/tty
-    if [[ "$get_context" =~ ^(д|Д|да|Да|ДА|y|Y|yes|Yes|YES)$ ]]; then
-        another_context "$sentence"
-    fi
+    # Command loop for the current word
+    while true; do
+        echo "Команды: [с]ледующее слово, другой [к]онтекст, [п]еревод предложения, включить/выключить [л]ог, [в]ыход "
+        read -p "Введите команду: " cmd </dev/tty
+        case "$cmd" in
+            с|n) # next word
+                echo "Переход к следующему слову."
+                break
+                ;;
+            к|k) # another context
+                echo "Запрашиваю другой контекст..."
+                all_sentences="${all_sentences}\n${sentence}"
+                sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE Придумай новое предложение со словом '${word}', которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в новом контексте." < /dev/null)
+                check_translation_function
+                ;;
+            п|t) # show translations
+                echo "Запрашиваю варианты перевода..."
+                echo "$(gemini -m "$MODEL_GEMINI" -p "Напиши несколько возможных вариантов перевода предложения '${sentence}' на ${LANGUAGE}.'" < /dev/null)"
+                ;;
+            л|l) # toggle logging
+                toggle_log
+                ;;
+            в|q) # exit
+                echo "Выход из скрипта."
+                # Restore descriptors before exiting
+                if $LOG_ACTIVE; then
+                  disable_log
+                fi
+                exit 0
+                ;;
+            *)
+                echo "Неизвестная команда: '$cmd'"
+                ;;
+        esac
+    done
 
     echo ""
 
@@ -118,4 +159,9 @@ while [[ -s "$INPUT_FILE" ]]; do
 done
 
 echo "Все слова в файле '$INPUT_FILE' были обработаны."
+
+# Restore descriptors at the end of the script
+if $LOG_ACTIVE; then
+  disable_log
+fi
 
