@@ -62,7 +62,7 @@ function another_context() {
 
     all_sentences="${all_sentences}\n${new_sentence}"
     
-    sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE Придумай новое предложение, которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в новом контексте." < /dev/null)
+    sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE Придумай новое предложение со словом '${word}', которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в новом контексте." < /dev/null)
     check_translation_function
      # Спрашиваем у пользователя, хочет ли он получить другой контекст данного слова
     read -p "Хотите получить другой контекст данного слова? (да/нет): " get_context </dev/tty
