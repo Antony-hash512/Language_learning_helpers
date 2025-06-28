@@ -76,37 +76,32 @@ sqlite3 "$DB_FILE" "CREATE TABLE IF NOT EXISTS sentences (word_key TEXT PRIMARY 
 # --- Functions ---
 add_sentence_to_db() {
     # Получаем текущий JSON-массив из SQLite
-    current_sentences=$(sqlite3 "$DB_FILE" "SELECT sentences_array FROM sentences WHERE word_key = '$word';")
-   
+    current_sentences=$(get_sentence_from_db "$word")
+
     if [[ -z "$current_sentences" ]]; then
         # Если ключа нет или значения пусты, создаем новый массив
-       updated_sentences="[\"$sentence\"]"
+        # Безопасно передаем 'sentence' в jq как аргумент
+       updated_sentences=$(jq -n --arg sentence "$sentence" '[$sentence]')
     else
         # Используем jq для добавления нового значения в JSON-массив
-        # Надо убедиться, что current_sentences является валидным JSON-массивом,
-        # иначе jq может выдать ошибку.
-        # проверяем, что current_sentences является валидным JSON-массивом
+        # Проверяем, что current_sentences является валидным JSON-массивом
         if ! echo "$current_sentences" | jq -e . >/dev/null 2>&1; then
             current_sentences="[]"
         fi
-        updated_sentences=$(echo "$current_sentences" | jq ". + [\"$sentence\"]")
+        # Безопасно передаем 'sentence' в jq как аргумент
+        updated_sentences=$(echo "$current_sentences" | jq --arg sentence "$sentence" '. + [$sentence]')
     fi
 
-    # Обновляем базу данных, используя heredoc и параметры для безопасности
-    sqlite3 "$DB_FILE" <<EOF
-.parameter set @word "$word"
-.parameter set @sentences "$updated_sentences"
-INSERT OR REPLACE INTO sentences (word_key, sentences_array) VALUES (@word, @sentences);
-EOF
+    # Обновляем базу данных, передавая значения как переменные окружения для дочернего процесса bash
+    # Это самый надежный способ избежать проблем с кавычками в SQL и shell
+    WORD_VAR=$word SENTENCES_VAR=$updated_sentences sqlite3 "$DB_FILE" \
+      'INSERT OR REPLACE INTO sentences (word_key, sentences_array) VALUES (?, ?)' \
+      "$(printf ".parameter set @1 '%q'\n.parameter set @2 '%q'" "$WORD_VAR" "$SENTENCES_VAR")"
 }
 
 get_sentence_from_db() {
-    #  проверяем, что word_key существует в базе данных
-    if ! sqlite3 "$DB_FILE" "SELECT EXISTS(SELECT 1 FROM sentences WHERE word_key = '$word');" >/dev/null 2>&1; then
-        return ""
-    else
-        return $(sqlite3 "$DB_FILE" "SELECT sentences_array FROM sentences WHERE word_key = '$word';")
-    fi
+    # Безопасно получаем данные, используя параметры
+    sqlite3 "$DB_FILE" "SELECT sentences_array FROM sentences WHERE word_key = ?;" -cmd ".parameter set @1 '$1'"
 }
 
 
