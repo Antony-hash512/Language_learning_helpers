@@ -71,12 +71,16 @@ fi
 DB_FILE="sentences_cache.sqlite"
 
 # Создаем таблицу. Используем TEXT для хранения JSON-строки.
-sqlite3 "$DB_FILE" "CREATE TABLE IF NOT EXISTS sentences (word_key TEXT PRIMARY KEY, sentences_array TEXT);"
+sqlite3 "$DB_FILE" "CREATE TABLE IF NOT EXISTS sentences (word_key TEXT PRIMARY KEY NOT NULL, sentences_array TEXT);"
 
 # --- Functions ---
 add_sentence_to_db() {
     local word="$1"
     local sentence="$2"
+
+    # если по какой-то причине слово пустое – сразу выходим
+    [[ -z "$word" ]] && return
+
     # Получаем текущий JSON-массив из SQLite
     current_sentences=$(get_sentence_from_db "$word")
 
