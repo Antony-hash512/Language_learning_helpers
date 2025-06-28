@@ -2,7 +2,7 @@
 
 # --- Colors setup ---
 source colors.sh
-HOTKEY_COLOR=$CYAN
+HOTKEY_COLOR=$YELLOW
 
 # --- Logging setup ---
 # Save original stdout and stderr
@@ -84,7 +84,7 @@ check_translation_function() {
     else
         echo -e "${RED}Перевод неправильный${NC}"
         IS_MISTAKE=true
-        echo -e "${BG_RED}${CYAN}$(gemini -m "$MODEL_GEMINI" -p "Объясни, почему слово '${word}' в предложении '${sentence}' нельзя перевести как '${translation}'" < /dev/null)${NC}"
+        echo -e "${BOLD_RED}$(gemini -m "$MODEL_GEMINI" -p "Объясни, почему слово '${word}' в предложении '${sentence}' нельзя перевести как '${translation}'" < /dev/null)${NC}"
     fi
 }
 
@@ -136,7 +136,7 @@ while [[ -s "$INPUT_FILE" ]]; do
             к|k) # another context
                 echo "Запрашиваю другой контекст..."
                 all_sentences="${all_sentences}\n${sentence}"
-                sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE Придумай новое предложение со словом '${word}', которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в новом контексте." < /dev/null)
+                sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE Придумай предложение со словом '${word}', которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в контексте, которого не было в тех предложениях." < /dev/null)
                 check_translation_function
                 ;;
             п|t) # show translations
