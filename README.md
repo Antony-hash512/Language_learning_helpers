@@ -98,6 +98,7 @@
 **Формат файла:**
 -   Одно слово на строку.
 -   Пустые строки игнорируются.
+-   Можно добавлять фразовые глаголы или идиомы с пробелами.
 
 **Пример `words.txt`:**
 ```
@@ -106,6 +107,12 @@ ephemeral
 serendipity
 cacophony
 juxtaposition
+meticulous
+run out of
+break down
+get along with
+piece of cake
+it's raining cats and dogs
 ```
 ### example-words.txt
 Файл `example-words.txt` находится в репозитории для примера. По-умолчанию же скрипт подхватывает файл `words.txt` или тот, который передан в качестве аргумента.
