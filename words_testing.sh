@@ -17,17 +17,19 @@ enable_log() {
     fi
     if [[ -z "$LOGFILE" ]]; then
         LOGFILE="logs/log-$(date '+%Y-%m-%d_%H-%M-%S').txt"
-        echo "Лог будет записан в $LOGFILE" >&3
+        echo -e "${GREEN}Лог будет записан в ${BOLD}$LOGFILE${RESET_BOLD}${NC}" >&3
     fi
-    echo "Логирование включено." >&3
-    # Redirect stdout and stderr to tee, which writes to file and original stdout
-    exec 1> >(tee -a "$LOGFILE") 2>&1
+    echo -e "${GREEN}Логирование включено.${NC}" >&3
+    # Перенаправляем stdout и stderr в 'tee'.
+    # 'tee' отправляет копию на /dev/stderr (наш терминал), чтобы мы видели цветной вывод.
+    # Вторую копию 'tee' через pipe | отправляет в 'sed', который убирает цвета и пишет в лог-файл.
+    exec 1> >(tee /dev/stderr | sed -r 's/\x1b\[[0-9;]*m//g' >> "$LOGFILE") 2>&1
     LOG_ACTIVE=true
 }
 
 # Function to disable logging
 disable_log() {
-    echo "Логирование отключено." >&3
+    echo -e "${YELLOW}Логирование отключено.${NC}" >&3
     # Restore stdout and stderr
     exec 1>&3 2>&4
     LOG_ACTIVE=false
@@ -60,12 +62,12 @@ LANGUAGE_INPUT="на английском языке"
 
 # Проверяем, существует ли файл
 if [[ ! -f "$INPUT_FILE" ]]; then
-    echo "Ошибка: Файл '$INPUT_FILE' не найден!"
+    echo -e "${RED}Ошибка: Файл '$INPUT_FILE' не найден!${NC}"
     exit 1
 fi
 
 check_translation_function() {
-    echo "$sentence"
+    echo -e "${CYAN}$sentence${NC}"
     echo ""
     read -p "Введите перевод данного слова в данном контексте: " translation </dev/tty
     echo ""
@@ -77,9 +79,9 @@ check_translation_function() {
     echo "$check_translation"
 
     if [[ "$check_translation" == "да" || "$check_translation" == "Да" || "$check_translation" == "ДА" ]]; then
-        echo "Перевод правильный"
+        echo -e "${GREEN}Перевод правильный${NC}"
     else
-        echo "Перевод неправильный"
+        echo -e "${RED}Перевод неправильный${NC}"
         IS_MISTAKE=true
         echo "$(gemini -m "$MODEL_GEMINI" -p "Объясни, почему слово '${word}' в предложении '${sentence}' нельзя перевести как '${translation}'" < /dev/null)"
     fi
@@ -93,7 +95,7 @@ move_current_word() {
     fi
     
     sed -i '1d' "$INPUT_FILE"
-    echo "Слово '$word' обработано и удалено из файла."
+    echo -e "${YELLOW}Слово '$word' обработано и удалено из файла.${NC}"
 }
 
 # Читаем файл построчно
@@ -107,7 +109,7 @@ while [[ -s "$INPUT_FILE" ]]; do
         continue
     fi
 
-    echo "--- Обрабатываю слово: '$word' ---"
+    echo -e "${PURPLE}--- Обрабатываю слово: '$word' ---${NC}"
 
     # Формируем промпт для Gemini.
     # Вы можете менять его как угодно.
@@ -123,7 +125,7 @@ while [[ -s "$INPUT_FILE" ]]; do
 
     # Command loop for the current word
     while true; do
-        echo "Команды: [с]ледующее слово, другой [к]онтекст, [п]еревод предложения, [л]ог (вкл/выкл), [в]ыход "
+        echo -e "${BOLD}Команды: [с]ледующее слово, другой [к]онтекст, [п]еревод предложения, [л]ог (вкл/выкл), [в]ыход ${NC}"
         read -p "Введите команду: " cmd </dev/tty
         case "$cmd" in
             с|n) # next word
@@ -157,7 +159,7 @@ while [[ -s "$INPUT_FILE" ]]; do
                 exit 0
                 ;;
             *)
-                echo "Неизвестная команда: '$cmd'"
+                echo -e "${RED}Неизвестная команда: '$cmd'${NC}"
                 ;;
         esac
     done
