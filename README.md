@@ -1,4 +1,3 @@
-# words_learning_test
 
 Проект для практики и тестирования словарного запаса с использованием [Google Gemini CLI](https://github.com/google-gemini/gemini-cli).
 
