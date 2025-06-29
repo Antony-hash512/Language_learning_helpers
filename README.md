@@ -24,7 +24,7 @@
 -   Логирование сессии в файл.
 
 ## Требования
--   `Linux`, `MacOS`, прочая линуксоподобная ОС или линуксовая командная строка на винде (`WSL`'ом вроде зовётся).
+-   `Linux`, `MacOS`, прочая линуксоподобная ОС или линуксовая командная строка на винде (`WSL`'ом вроде зовётся). Или даже `Android` (инструкция ниже)
 -   `bash`
 -   `nodejs` версии 18 или выше и `npm`
 -   `@google/gemini-cli`
@@ -99,6 +99,42 @@
     sudo pacman -S sqlite jq
     ```
     Для других дистрибутивов используйте соответствующий менеджер пакетов.
+
+## Установка на Android
+
+1.  **Установите `Termux`:**
+
+    Для установки `Termux` можно использовать `F-Droid` или `Aurora Store`.
+    Дайте разрешение на установку из источника из которого получен `F-Droid` или `Aurora Store`, установите `Termux` и запустите его. Для общесистемного буфера обмена можно также установить `Termux:API`.
+
+2.  **Установите нужные пакеты:**
+    ```bash
+    pkg update
+    pkg install nodejs sqlite git
+    ```
+3.  **При желании можно установить `fish`:**
+
+    ```bash
+    pkg install fish
+    ```
+
+4.  **Клонируйте репозиторий:**
+    ```bash
+    mkdir -p ~/git
+    cd ~/git
+    git clone https://github.com/Antony-hash512/Language_learning_helpers
+    cd Language_learning_helpers
+    npm install -g @google/gemini-cli
+    ```
+
+5.  **Сделайте скрипт исполняемым (если он таковым не является):**
+    ```bash
+    chmod +x words_testing.sh
+    ```
+6.  **Запустите скрипт:**
+    ```bash
+    ./words_testing.sh
+    ```
 
 ## Настройка файла `words.txt`
 
