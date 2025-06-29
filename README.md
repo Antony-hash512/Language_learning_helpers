@@ -112,10 +112,22 @@
     pkg update
     pkg install nodejs sqlite git mpv
     ```
-3.  **При желании можно установить `fish`:**
+3.  **При желании можно установить `fish`, а также любой текстовый редактор например `vim`, `neovim`, `nano` или `micro`:**
 
     ```bash
     pkg install fish
+    ```
+    ```bash
+    pkg install vim
+    ```
+    ```bash
+    pkg install neovim
+    ```
+    ```bash
+    pkg install nano
+    ```
+    ```bash
+    pkg install micro
     ```
 
 4.  **Клонируйте репозиторий:**
