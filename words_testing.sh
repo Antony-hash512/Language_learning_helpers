@@ -61,11 +61,25 @@ MODEL_GEMINI=${2:-"gemini-2.5-flash"}
 LANGUAGE="русский язык"
 LANGUAGE_INPUT="на английском языке"
 LANGUAGE_INPUT_CODE="en"
+EXAMPLE_FILE="example-words.txt"
 
-# Проверяем, существует ли файл
+
+
+
+# Проверяем, существует ли файл со словами
 if [[ ! -f "$INPUT_FILE" ]]; then
-    echo -e "${RED}Ошибка: Файл '$INPUT_FILE' не найден!${NC}"
-    exit 1
+    echo -e "${YELLOW}Файл '$INPUT_FILE' не найден, но можем попробовать задействовать файл с примерами!${NC}"
+    if [[ ! -f "$EXAMPLE_FILE" ]]; then
+        echo -e "${RED}Ошибка: Файлы '$INPUT_FILE' или '$EXAMPLE_FILE' не найдены!${NC}"
+        exit 1
+    else
+        if cp "$EXAMPLE_FILE" "$INPUT_FILE"; then
+            echo -e "${GREEN}Файл '$INPUT_FILE' был создан из файла '$EXAMPLE_FILE'.${NC}"
+        else
+            echo -e "${RED}Ошибка: Не удалось создать файл '$INPUT_FILE' из файла '$EXAMPLE_FILE'!${NC}"
+            exit 1
+        fi
+    fi
 fi
 
 # --- Database setup ---
