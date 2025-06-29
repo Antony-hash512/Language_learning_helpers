@@ -60,6 +60,7 @@ IS_MISTAKE=false
 MODEL_GEMINI=${2:-"gemini-2.5-flash"}
 LANGUAGE="русский язык"
 LANGUAGE_INPUT="на английском языке"
+LANGUAGE_INPUT_CODE="en"
 
 # Проверяем, существует ли файл
 if [[ ! -f "$INPUT_FILE" ]]; then
@@ -181,7 +182,7 @@ while [[ -s "$INPUT_FILE" ]]; do
 
     # Command loop for the current word
     while true; do
-        echo -e "Команды: [${HOTKEY_COLOR}с${NC}]ледующее слово, другой [${HOTKEY_COLOR}к${NC}]онтекст, [${HOTKEY_COLOR}п${NC}]ереводы предложения, напомнить п[${HOTKEY_COLOR}р${NC}]едложение, [${HOTKEY_COLOR}л${NC}]ог (вкл/выкл), [${HOTKEY_COLOR}в${NC}]ыход"
+        echo -e "Команды: [${HOTKEY_COLOR}с${NC}]ледующее слово, другой [${HOTKEY_COLOR}к${NC}]онтекст, [${HOTKEY_COLOR}п${NC}]ереводы предложения, [${HOTKEY_COLOR}о${NC}]звучить предложение, напомнить п[${HOTKEY_COLOR}р${NC}]едложение, [${HOTKEY_COLOR}л${NC}]ог (вкл/выкл), [${HOTKEY_COLOR}в${NC}]ыход"
         read -p "Введите команду: " cmd </dev/tty
         case "$cmd" in
             с|n) # next word
@@ -199,6 +200,14 @@ while [[ -s "$INPUT_FILE" ]]; do
             п|t) # show translations
                 echo "Запрашиваю варианты перевода..."
                 echo -e "${CYAN}$(gemini -m "$MODEL_GEMINI" -p "Напиши несколько возможных вариантов перевода предложения '${sentence}' на ${LANGUAGE}.'" < /dev/null)${NC}"
+                ;;
+            о|o) # narrate sentence
+                echo ""
+                echo -e "${BLUE}Озвучиваю предложение:${NC}"
+                echo -e "${CYAN}$sentence${NC}"
+                ENCODED_TEXT=$(jq -rn --arg x "$sentence" '$x|@uri')
+                mpv "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${ENCODED_TEXT}&tl=${LANGUAGE_INPUT_CODE}"
+                echo ""
                 ;;
             л|l) # toggle logging
                 toggle_log
