@@ -130,20 +130,25 @@
     pkg install micro
     ```
 
-4.  **Клонируйте репозиторий:**
+4.  **Установите `gemini-cli`:**
+    ```bash
+    npm install -g @google/gemini-cli
+    ```
+    После чего авторизуйтесь как описано в разделе [Аутентификация `gemini-cli`](#аутентификация-gemini-cli) т.е. лучше всего через браузер.
+
+5.  **Клонируйте репозиторий:**
     ```bash
     mkdir -p ~/git
     cd ~/git
     git clone https://github.com/Antony-hash512/Language_learning_helpers
     cd Language_learning_helpers
-    npm install -g @google/gemini-cli
     ```
 
-5.  **Сделайте скрипт исполняемым (если он таковым не является):**
+6.  **Сделайте скрипт исполняемым (если он таковым не является):**
     ```bash
     chmod +x words_testing.sh
     ```
-6.  **Запустите скрипт:**
+7.  **Запустите скрипт:**
     ```bash
     ./words_testing.sh
     ```
