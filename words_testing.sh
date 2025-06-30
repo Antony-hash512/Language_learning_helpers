@@ -191,7 +191,6 @@ while [[ -s "$INPUT_FILE" ]]; do
 
     sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE $EXTRA_PROMPT_SENTENCE" < /dev/null)
     sentence=$(echo "$sentence" | sed 's/\*//g')
-    colored_sentence=$sentence
     add_sentence_to_db "$word" "$sentence"
 
     check_translation_function
@@ -220,7 +219,7 @@ while [[ -s "$INPUT_FILE" ]]; do
             о|o) # narrate sentence
                 echo ""
                 echo -e "${BLUE}Озвучиваю предложение:${NC}"
-                echo -e "${CYAN}$colored_sentence${NC}"
+                echo -e "${CYAN}$sentence${NC}"
                 ENCODED_TEXT=$(jq -rn --arg x "$sentence" '$x|@uri')
                 mpv "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${ENCODED_TEXT}&tl=${LANGUAGE_INPUT_CODE}"
                 echo ""
@@ -230,7 +229,7 @@ while [[ -s "$INPUT_FILE" ]]; do
                 ;;
             р|r) # repeat sentence
                 echo ""
-                echo -e "${CYAN}$colored_sentence${NC}"
+                echo -e "${CYAN}$sentence${NC}"
                 echo ""
                 ;;
             в|q) # exit
