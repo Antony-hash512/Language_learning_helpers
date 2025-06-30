@@ -191,7 +191,7 @@ while [[ -s "$INPUT_FILE" ]]; do
 
     sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_CREATE_SENTENCE $EXTRA_PROMPT_SENTENCE" < /dev/null)
     sentence=$(echo "$sentence" | sed 's/\*//g')
-    colored_sentence=$(echo "$sentence" | sed "s/$word/${BLUE}&${NC}${CYAN}/gi")
+    colored_sentence=$sentence
     add_sentence_to_db "$word" "$sentence"
 
     check_translation_function
