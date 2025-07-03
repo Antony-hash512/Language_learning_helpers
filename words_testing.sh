@@ -209,6 +209,7 @@ while [[ -s "$INPUT_FILE" ]]; do
                 all_sentences="${all_sentences} \n ${sentence}"
                 PROMPT_GET_DIFFERENT_SENTENCE="Придумай предложение со словом '${word}' ${LANGUAGE_INPUT}, которое существенно отличается от следующих предложений: ${all_sentences}. По возможности, используй слово '${word}' в контексте, которого не было в тех предложениях. ${EXTRA_PROMPT_SENTENCE}"
                 sentence=$(gemini -m "$MODEL_GEMINI" -p "$PROMPT_GET_DIFFERENT_SENTENCE" < /dev/null)
+                sentence=$(echo "$sentence" | sed 's/\*//g')
                 add_sentence_to_db "$word" "$sentence"
                 check_translation_function
                 ;;
