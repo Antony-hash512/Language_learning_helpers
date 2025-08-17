@@ -66,7 +66,7 @@
     set -x PATH "$HOME/.npm-global/bin $PATH"
     ```
     
-4.  **Аутентификация `gemini-cli`:**
+4.  **Аутентификация gemini-cli:**
 
     Запустите `gemini` в первый раз, чтобы войти в свою учетную запись Google.
     ```bash
