@@ -65,7 +65,7 @@
     ```fish
     set -x PATH "$HOME/.npm-global/bin $PATH"
     ```
-    
+### Аутентификация gemini-cli        
 4.  **Аутентификация gemini-cli:**
 
     Запустите `gemini` в первый раз, чтобы войти в свою учетную запись Google.
